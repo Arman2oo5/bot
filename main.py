@@ -375,6 +375,8 @@ def text_messages(message):
 USE_WEBHOOK = os.getenv("USE_WEBHOOK", "0") == "1"
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", None)
 
+import time
+
 if __name__ == '__main__':
     try:
         from messages_kz import msg
@@ -383,33 +385,72 @@ if __name__ == '__main__':
         db.init_db()
         print("db.init_db()")
 
-        if USE_WEBHOOK and WEBHOOK_URL:
-            print("RUN MODE: WEBHOOK")
+        print("RUN MODE: RENDER / POLLING (WITH AUTO-RESTART)")
 
-            import flask
-            from flask import Flask, request
-
-            app = Flask(__name__)
-
-            @app.route(f"/{config.BOT_TOKEN}", methods=["POST"])
-            def webhook():
-                json_str = request.get_data().decode("UTF-8")
-                update = types.Update.de_json(json_str)
-                bot.process_new_updates([update])
-                return "OK"
-
-            @app.route("/")
-            def index():
-                return "Bot is running"
-
-            bot.remove_webhook()
-            bot.set_webhook(url=f"{WEBHOOK_URL}/{config.BOT_TOKEN}")
-
-            app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
-
-        else:
-            print("RUN MODE: POLLING")
-            bot.polling(none_stop=True, interval=0)
+        # Запускаем бесконечный цикл для защиты от сетевых сбоев
+        while True:
+            try:
+                bot.polling(none_stop=True, interval=0, timeout=60)
+            except Exception as polling_error:
+                # Сюда будут прилетать ошибки ReadTimeout, ConnectionError и т.д.
+                print(f"Бот упал из-за сетевой ошибки: {polling_error}")
+                print("Перезапуск бота через 5 секунд...")
+                bot.stop_polling()  # Сбрасываем старый поток
+                time.sleep(5)       # Небольшая пауза, чтобы не спамить серверам Telegram
 
     except Exception as exception:
-        print(exception)
+        print("Критическая ошибка при инициализации приложения:", exception)
+
+# if __name__ == '__main__':
+#     try:
+#         from messages_kz import msg
+#         print("from messages_kz import msg")
+
+#         db.init_db()
+#         print("db.init_db()")
+
+#         print("RUN MODE: RENDER / POLLING")
+
+#         bot.polling(none_stop=True, interval=0)
+
+#     except Exception as exception:
+#         print(exception)
+        
+# if __name__ == '__main__':
+#     try:
+#         from messages_kz import msg
+#         print("from messages_kz import msg")
+
+#         db.init_db()
+#         print("db.init_db()")
+
+#         if USE_WEBHOOK and WEBHOOK_URL:
+#             print("RUN MODE: WEBHOOK")
+
+#             import flask
+#             from flask import Flask, request
+
+#             app = Flask(__name__)
+
+#             @app.route(f"/{config.BOT_TOKEN}", methods=["POST"])
+#             def webhook():
+#                 json_str = request.get_data().decode("UTF-8")
+#                 update = types.Update.de_json(json_str)
+#                 bot.process_new_updates([update])
+#                 return "OK"
+
+#             @app.route("/")
+#             def index():
+#                 return "Bot is running"
+
+#             bot.remove_webhook()
+#             bot.set_webhook(url=f"{WEBHOOK_URL}/{config.BOT_TOKEN}")
+
+#             app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
+#         else:
+#             print("RUN MODE: POLLING")
+#             bot.polling(none_stop=True, interval=0)
+
+#     except Exception as exception:
+#         print(exception)
