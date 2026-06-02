@@ -143,8 +143,8 @@ def send_application():
         print(str(application.telegram_id))
         print(str(application.catalog_id))
         # SQL-запрос новая запись
-        sql = "INSERT INTO application (date_application, telegram_id, catalog_id) VALUES (?, ?, ?)"
-        #sql = "INSERT INTO application (date_application, telegram_id,catalog_id) VALUES ('" + str(application.date_application) + "', " + str(application.telegram_id) + ", " +  str(application.catalog_id) + ")"
+        #sql = "INSERT INTO application (date_application, telegram_id, catalog_id) VALUES (?, ?, ?)"
+        sql = "INSERT INTO application (date_application, telegram_id,catalog_id) VALUES ('" + str(application.date_application) + "', " + str(application.telegram_id) + ", " +  str(application.catalog_id) + ")"
         # Параметры запроса
         #parameters = [str(application.date_application), application.telegram_id, application.catalog_id]
         parameters = []
@@ -160,8 +160,8 @@ def view_application():
     print("view_application")
     try:
         # История заявок на ремонт устройств
-        sql = "SELECT id, strftime('%d.%m.%Y %H:%M:%S', date_application) AS data, telegram_id, category, catalog_title, price, final\n"
-        #sql = "SELECT id, TO_CHAR(date_application, 'DD.MM.YYYY HH24:MI') AS data, telegram_id, category, catalog_title, price, final\n"
+        #sql = "SELECT id, strftime('%d.%m.%Y %H:%M:%S', date_application) AS data, telegram_id, category, catalog_title, price, final\n"
+        sql = "SELECT id, TO_CHAR(date_application, 'DD.MM.YYYY HH24:MI') AS data, telegram_id, category, catalog_title, price, final\n"
         sql = sql + "FROM view_application\n"
         sql = sql + "WHERE telegram_id=" + str(chat_id) + "\n"
         sql = sql + "ORDER BY date_application"
