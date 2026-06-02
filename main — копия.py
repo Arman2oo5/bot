@@ -17,8 +17,6 @@ import config
 import db
 # Подключаем модуль для работы с датой/веременем
 from datetime import datetime, timedelta
-from flask import Flask
-from threading import Thread
 
 import os
 
@@ -379,19 +377,6 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL", None)
 
 import time
 
-# Flask для Render Health Check
-app = Flask(__name__)
-
-@app.route("/")
-def health_check():
-    return "Bot is running"
-
-def run_flask():
-    app.run(
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", 10000))
-    )
-    
 if __name__ == '__main__':
     try:
         from messages_kz import msg
@@ -400,60 +385,21 @@ if __name__ == '__main__':
         db.init_db()
         print("db.init_db()")
 
-        # Если приложение запущено на Render
-        if os.getenv("RENDER"):
-            print("RENDER DETECTED")
+        print("RUN MODE: RENDER / POLLING (WITH AUTO-RESTART)")
 
-            flask_thread = Thread(target=run_flask)
-            flask_thread.daemon = True
-            flask_thread.start()
-
-            print("HEALTH CHECK SERVER STARTED")
-
-        else:
-            print("LOCAL MODE")
-
-        print("RUN MODE: POLLING (WITH AUTO-RESTART)")
-
+        # Запускаем бесконечный цикл для защиты от сетевых сбоев
         while True:
             try:
-                bot.polling(
-                    none_stop=True,
-                    interval=0,
-                    timeout=60
-                )
+                bot.polling(none_stop=True, interval=0, timeout=60)
             except Exception as polling_error:
+                # Сюда будут прилетать ошибки ReadTimeout, ConnectionError и т.д.
                 print(f"Бот упал из-за сетевой ошибки: {polling_error}")
                 print("Перезапуск бота через 5 секунд...")
-                bot.stop_polling()
-                time.sleep(5)
+                bot.stop_polling()  # Сбрасываем старый поток
+                time.sleep(5)       # Небольшая пауза, чтобы не спамить серверам Telegram
 
     except Exception as exception:
         print("Критическая ошибка при инициализации приложения:", exception)
-        
-# if __name__ == '__main__':
-#     try:
-#         from messages_kz import msg
-#         print("from messages_kz import msg")
-
-#         db.init_db()
-#         print("db.init_db()")
-
-#         print("RUN MODE: RENDER / POLLING (WITH AUTO-RESTART)")
-
-#         # Запускаем бесконечный цикл для защиты от сетевых сбоев
-#         while True:
-#             try:
-#                 bot.polling(none_stop=True, interval=0, timeout=60)
-#             except Exception as polling_error:
-#                 # Сюда будут прилетать ошибки ReadTimeout, ConnectionError и т.д.
-#                 print(f"Бот упал из-за сетевой ошибки: {polling_error}")
-#                 print("Перезапуск бота через 5 секунд...")
-#                 bot.stop_polling()  # Сбрасываем старый поток
-#                 time.sleep(5)       # Небольшая пауза, чтобы не спамить серверам Telegram
-
-#     except Exception as exception:
-#         print("Критическая ошибка при инициализации приложения:", exception)
 
 # if __name__ == '__main__':
 #     try:
