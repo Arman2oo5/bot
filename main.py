@@ -6,7 +6,7 @@
 from main_bot import bot 
 # Импортируем типы из модуля, чтобы создавать кнопки
 from telebot import types
-from telegram.constants import ParseMode
+from telegram import ParseMode
 # Для определения имени пользователя
 import getpass
 # Инмпортируем все с файла сообщений
